@@ -1,0 +1,41 @@
+# PSJ WebWorks Website Configuration
+
+## Deployment Settings
+server:
+  type: apache
+  url: https://psjwebworks.com
+  root: /var/www/psjwebworks/
+
+## Files
+pages:
+  - index.html
+  - maintenance.html
+
+## Features
+  - Matrix digital rain effect
+  - Particle network background
+  - Glitch text animations
+  - Typing effect messages
+  - Animated progress bar
+
+## Colors
+primary: "#0f0"
+secondary: "#00ff88"
+accent: "#00ffff"
+purple: "#ff00ff"
+background: "#000"
+
+## Customization
+  - Edit maintenance.html for custom messages
+  - Modify CSS section for color changes
+  - Adjust JavaScript for different effects
+
+## Deployment Commands
+  # Upload to server:
+  scp -r /home/jason/.hermes/website/psjwebworks/ user@server:/var/www/
+  
+  # Set permissions:
+  chmod -R 755 /var/www/psjwebworks/
+  
+  # Create symlink (if needed):
+  ln -s /var/www/psjwebworks/ /var/www/psjwebworks.com/

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Under Maintenance - PSJ WebWorks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            opacity: 0.3;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .glitch-wrapper {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .glitch {
+            font-size: 4rem;
+            font-weight: bold;
+            position: relative;
+            color: #0f0;
+            text-shadow: 0 0 10px #0f0;
+            animation: glitch-anim 2s infinite;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        .glitch::before {
+            animation: glitch-anim-1 2s infinite;
+            color: #00ffff;
+            z-index: -1;
+        }
+
+        .glitch::after {
+            animation: glitch-anim-2 2s infinite;
+            color: #ff00ff;
+            z-index: -2;
+        }
+
+        .status {
+            margin: 30px 0;
+            font-size: 1.2rem;
+            color: #0f0;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        .typing-effect {
+            font-size: 1.5rem;
+            color: #fff;
+            min-height: 2rem;
+            margin: 20px 0;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 3px;
+            height: 2rem;
+            background: #0f0;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+        }
+
+        .progress-bar {
+            width: 300px;
+            height: 20px;
+            background: #111;
+            border: 2px solid #0f0;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 10px #0f0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0f0, #00ff88);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 1.5s infinite;
+        }
+
+        .loading-text {
+            font-size: 0.9rem;
+            color: #0f0;
+            margin-top: 10px;
+        }
+
+        .system-info {
+            margin: 40px 0;
+            font-size: 0.9rem;
+            color: #00aa00;
+            text-shadow: 0 0 3px #00aa00;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .blink {
+            animation: blink 0.5s infinite;
+        }
+
+        .footer {
+            margin-top: 50px;
+            font-size: 0.8rem;
+            color: #00ff88;
+            opacity: 0.7;
+        }
+
+        @keyframes glitch-anim {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        @keyframes glitch-anim-1 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(3px, -2px); opacity: 0.8; }
+            40% { transform: translate(-3px, 2px); opacity: 0.8; }
+            60% { transform: translate(3px, 2px); opacity: 0.8; }
+            80% { transform: translate(-3px, -2px); opacity: 0.8; }
+        }
+
+        @keyframes glitch-anim-2 {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-3px, 2px); opacity: 0.8; }
+            40% { transform: translate(3px, -2px); opacity: 0.8; }
+            60% { transform: translate(-3px, -2px); opacity: 0.8; }
+            80% { transform: translate(3px, 2px); opacity: 0.8; }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @media (max-width: 600px) {
+            .glitch {
+                font-size: 2.5rem;
+            }
+            
+            .typing-effect {
+                font-size: 1.1rem;
+            }
+            
+            .progress-bar {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-canvas"></canvas>
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="container">
+        <div class="glitch-wrapper">
+            <div class="glitch" data-text="UNDER MAINTENANCE">
+                UNDER MAINTENANCE
+            </div>
+        </div>
+        
+        <div class="system-info">
+            <span>✓ SYSTEM: <span class="blink">ONLINE</span></span>
+            <span>✓ STATUS: <span class="blink">UPDATES</span></span>
+            <span>✓ PROGRESS: <span class="blink">OPTIMIZING</span></span>
+        </div>
+        
+        <div class="typing-effect">
+            <span id="typed-text"></span><span class="cursor"></span>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+        
+        <div class="loading-text" id="loading-text">Initializing systems...</div>
+        
+        <div class="footer">
+            <p>© 2024 PSJ WebWorks - <span class="blink">REBOOTING</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Matrix Digital Rain Effect
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
+
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for(let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for(let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        // Particle Network Effect
+        const particleCanvas = document.getElementById('particle-canvas');
+        const pCtx = particleCanvas.getContext('2d');
+        let particles = [];
+
+        particleCanvas.width = window.innerWidth;
+        particleCanvas.height = window.innerHeight;
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * particleCanvas.width;
+                this.y = Math.random() * particleCanvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = '#00ff88';
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > particleCanvas.width) this.x = 0;
+                if (this.x < 0) this.x = particleCanvas.width;
+                if (this.y > particleCanvas.height) this.y = 0;
+                if (this.y < 0) this.y = particleCanvas.height;
+            }
+
+            draw() {
+                pCtx.fillStyle = this.color;
+                pCtx.beginPath();
+                pCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                pCtx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function drawParticles() {
+            pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+                
+                // Draw connections
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 100) {
+                        pCtx.strokeStyle = 'rgba(0, 255, 136, ' + (1 - distance / 100) * 0.2 + ')';
+                        pCtx.lineWidth = 1;
+                        pCtx.beginPath();
+                        pCtx.moveTo(particles[i].x, particles[i].y);
+                        pCtx.lineTo(particles[j].x, particles[j].y);
+                        pCtx.stroke();
+                    }
+                }
+            }
+        }
+
+        // Typing Effect
+        const messages = [
+            "Initializing core systems...",
+            "Connecting to secure servers...",
+            "Optimizing database performance...",
+            "Updating security protocols...",
+            "Refactoring legacy code...",
+            "Deploying new features...",
+            "Testing integration points...",
+            "Finalizing configurations...",
+            "Almost there..."
+        ];
+
+        let msgIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let typingSpeed = 100;
+
+        function typeEffect() {
+            const typedElement = document.getElementById('typed-text');
+            
+            if (msgIndex < messages.length) {
+                if (!isDeleting && charIndex < messages[msgIndex].length) {
+                    typedElement.textContent = messages[msgIndex].substring(0, charIndex + 1);
+                    charIndex++;
+                    typingSpeed = 50;
+                } else if (isDeleting && charIndex > 0) {
+                    typedElement.textContent = messages[msgIndex].substring(0, charIndex - 1);
+                    charIndex--;
+                    typingSpeed = 30;
+                } else {
+                    msgIndex++;
+                    charIndex = 0;
+                    isDeleting = true;
+                    typingSpeed = 2000;
+                }
+            } else {
+                typingSpeed = 5000;
+            }
+
+            setTimeout(typeEffect, typingSpeed);
+        }
+
+        // Progress Bar Animation
+        let progress = 0;
+        const progressFill = document.getElementById('progress');
+        const loadingText = document.getElementById('loading-text');
+        const progressMessages = [
+            "Initializing systems...",
+            "Connecting to servers...",
+            "Optimizing database...",
+            "Updating protocols...",
+            "Refactoring code...",
+            "Deploying features...",
+            "Testing integration...",
+            "Finalizing configs...",
+            "Almost complete..."
+        ];
+
+        function updateProgress() {
+            if (progress < 100) {
+                progress++;
+                progressFill.style.width = progress + '%';
+                loadingText.textContent = progressMessages[Math.floor(progress / 5)];
+                setTimeout(updateProgress, 50);
+            }
+        }
+
+        // Window Resize Handler
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        });
+
+        // Start Everything
+        initParticles();
+        drawMatrix();
+        setInterval(drawMatrix, 50);
+        setInterval(drawParticles, 100);
+        typeEffect();
+        updateProgress();
+
+        // Start progress from a random position
+        setTimeout(() => {
+            progress = Math.floor(Math.random() * 30) + 10;
+            progressFill.style.width = progress + '%';
+        }, 1000);
+    </script>
+</body>
+</html>
